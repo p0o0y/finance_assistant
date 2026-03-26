@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "properties": {
+    "merchant": { "type": ["string", "null"], "description": "추출된 상호명" },
+    "category": { "type": ["string", "null"], "description": "식비, 카페,편의점,교통 등 카테고리" },
+    "period": {
+      "type": "object",
+      "properties": {
+        "startDate": { "type": "string", "description": "YYYY-MM-DD" },
+        "endDate": { "type": "string", "description": "YYYY-MM-DD" }
+      }
+    },
+    "intent": { "enum": ["SUM", "AVG", "LIST", "COUNT"], "description": "조회 목적" }
+  },
+  "required": ["merchant", "category", "period", "intent"]
+}

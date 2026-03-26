@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  db:
+    image: ankane/pgvector:latest  # pgvector가 이미 설치된 공식 이미지
+    container_name: postgres_vector
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1111
+      POSTGRES_DB: finance_db
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data # 데이터 휘발 방지용 마운트
+    restart: always

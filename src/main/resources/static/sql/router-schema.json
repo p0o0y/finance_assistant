@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "queryType": {
+      "enum": ["SQL", "RAG"],
+      "description": "사용자 질문의 처리 경로"
+    }
+  },
+  "required": ["queryType"]
+}
