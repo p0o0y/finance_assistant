@@ -71,8 +71,6 @@ public class CodefService {
         try {
             log.info("codef 연결 시작");
             String publicKey = easyCodef.getPublicKey();
-            // 디버깅용 로그 추가
-            log.info("Public Key 존재 여부: {}", (publicKey != null && !publicKey.isEmpty()));
             accountMap.put("password", EasyCodefUtil.encryptRSA(requestDto.getLoginPW(), easyCodef.getPublicKey())); // RSA암호화가 필요한 필드는 encryptRSA(String plainText, String publicKey) 메서드를 이용해 암호화
         } catch (Exception e) {
             e.printStackTrace();
@@ -207,13 +205,13 @@ public class CodefService {
 
             CompletableFuture.allOf(codefFutures.toArray(new CompletableFuture[0]))
                     .thenRun(()->{
-                        log.info("👩‍🎤 sub thread 모든 카드사 거래내역 동기화 및 llm 분류 완료 ");
+                        log.info(" sub thread 모든 카드사 거래내역 동기화 및 llm 분류 완료 ");
                     })
                     .exceptionally(ex->{
                         log.error("동기화 중 오류 발생");
                         return null;}
                     );
-            log.info("🔢main ) 할 일 끝 접수만 ok");
+            log.info("🔢main 할 일 끝 접수만 ");
 
     }
 
@@ -274,7 +272,7 @@ public class CodefService {
 
     public void classifyAndSave(List<ParsedTransaction> newOnes, Map<String, String> merchantCache) {
         // LLM 호출이 필요한 항목들을 정보를 포함해서 담아둘 임시 맵
-        log.info("🔢 sub 분류 프로세스 시작 - 대상 건수: {}건", newOnes.size());
+        log.info(" sub 분류 프로세스 시작 - 대상 건수: {}건", newOnes.size());
 
         Map<String, PendingLLM> pendingLLMs = new HashMap<>(); //LLM에 보낼 것
         List<MerchantCategory> toSaveMerchants = new ArrayList<>(); // DB에 저장할 것
@@ -307,7 +305,7 @@ public class CodefService {
                 pendingLLMs.put(key, new PendingLLM(bizNo, storeName, future));
             }
         }
-        log.info("⏳⏩⏩ sub ) 모든 비동기 결과 수집 시작 (future.get 구간)");
+        log.info("⏩ sub ) 모든 비동기 결과 수집 시작 (future.get 구간)");
         long collectStart = System.currentTimeMillis();
         // 비동기 결과 수집 및 MerchantCategory 생성 기본 라틴 문자로 변환
 
@@ -320,7 +318,7 @@ public class CodefService {
         try {
             allFutures.get(15, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            log.warn(" LLM 전체 타임아웃 - 미완료 건은 기타 처리");
+            log.warn(" LLM 전체 타임아웃 ");
         }catch (Exception e){
             log.warn(" LLM 결과 수집 중 오류: {}", e.getMessage());
         }
@@ -337,7 +335,7 @@ public class CodefService {
                     .category(category)
                     .build());
         });
-        log.info("⏱️ [Main] 결과 수집 완료! 소요시간: {}ms", (System.currentTimeMillis() - collectStart));
+        log.info("Main 결과 수집 완료 소요시간: {}ms", (System.currentTimeMillis() - collectStart));
 
         // 5) 최종 CardTransaction , mercant  batch insert
         List<CardTransaction> toSave = newOnes.stream()
@@ -353,7 +351,7 @@ public class CodefService {
 
         transactionsSaveService.saveAll(toSaveMerchants, toSave);
 
-        log.info("💾 [Main] DB 저장 완료");
+        log.info(" DB 저장 완료");
     }
 
     //  (정보 보관용)
