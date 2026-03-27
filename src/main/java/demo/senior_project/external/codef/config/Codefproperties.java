@@ -20,3 +20,5 @@ public class Codefproperties {
     private String domain;
     private Map<String, String> path;
 }
+
+

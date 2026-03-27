@@ -30,7 +30,10 @@ public enum ErrorCode {
     USER_NOT_FOUNT(HttpStatus.NOT_FOUND,"U001","codef connecteID 미등록 사용자입니다"),
     CODEF_API_CONNECTEDID_ERROR(HttpStatus.BAD_REQUEST,"C001","비밀번호 암호화 실패"),
     CODEF_API_CARD_ERROR(HttpStatus.BAD_REQUEST,"CD002","카드 관련 CODEF API 연결 실패"),
-    CARD_NOT_FOUND(HttpStatus.BAD_REQUEST,"CD001","카드를 찾을 수 없습니다");
+    CARD_NOT_FOUND(HttpStatus.BAD_REQUEST,"CD001","카드를 찾을 수 없습니다"),
+
+    CATEGORY_LLM_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "L001", "llm 카테고리 파싱 실퍂 ");
+
     private final HttpStatus httpStatus;
     private final String errorCode;
     private final String errorMessage;

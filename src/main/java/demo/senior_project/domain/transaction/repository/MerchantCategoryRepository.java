@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface MerchantCategoryRepository extends JpaRepository<MerchantCategory,Long> {
     Optional<MerchantCategory> findByBizNoAndStoreName(String bizNo , String storeName);
     // 가맹점 정보 한꺼번에
-    @Query("SELECT m FROM MerchantCategory m WHERE CONCAT(m.bizNo, m.storeName) IN :keys")
-    List<MerchantCategory> findAllByBizNoStoreNameIn(@Param("keys") List<String> keys);
+    @Query("SELECT m FROM MerchantCategory m WHERE m.bizNo IN :bizNos AND m.storeName IN :storeNames")
+    List<MerchantCategory> findAllByBizNoInAndStoreNameIn(
+            @Param("bizNos") List<String> bizNos,
+            @Param("storeNames") List<String> storeNames
+    );
 }
