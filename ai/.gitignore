@@ -1,0 +1,10 @@
+ch01/ch01_env/
+venv/
+# 환경 변수 및 설정
+.vscode/
+.env
+
+#파이썬 캐시 
+__pycache__/
+*.pyc
+/postgres_data/

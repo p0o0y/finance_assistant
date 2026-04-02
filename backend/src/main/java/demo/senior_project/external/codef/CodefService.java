@@ -122,6 +122,7 @@ public class CodefService {
             parameterMap.put("organization", cardCompanyCode);
             parameterMap.put("connectedId", connectedId);
             String response = easyCodef.requestProduct(CARD_LIST_PATH, EasyCodefServiceType.DEMO, parameterMap);
+
             CardListResponse responseDto = objectMapper.readValue(response, CardListResponse.class);
 
             for (CardListResponse.Data data : responseDto.getData()) {
