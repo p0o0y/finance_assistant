@@ -1,9 +1,0 @@
-llama-index
-llama-index-vector-stores-postgres
-llama-index-embeddings-huggingface
-llama-index-llms-openai
-psycopg2-binary
-pypdf
-fastapi
-uvicorn
-llama_index.core
