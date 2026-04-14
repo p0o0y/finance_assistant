@@ -12,6 +12,7 @@ import java.util.Map;
 @RequestMapping("/api/cards")
 @RequiredArgsConstructor
 public class CardRecommendController {
+
     private final CardRecommendationService cardRecommendationService;
 
     @PostMapping("/recommend")

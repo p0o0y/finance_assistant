@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -25,12 +26,25 @@ public class CardRecommendationService {
                 "user_report", userReport
         );
 
-        return restClient.post()
-                .uri(fastApiUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(CardResponse.class);
+        try {
+            CardResponse response = restClient.post()
+                    .uri(fastApiUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(CardResponse.class);
+
+            if (response == null) {
+                throw new RuntimeException("FastAPI 응답이 비어 있습니다.");
+            }
+            return response;
+
+        } catch (ResourceAccessException e) {
+            // 타임아웃 or 연결 실패
+            throw new RuntimeException("카드 추천 서버 연결 실패 (타임아웃): " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("카드 추천 서비스 오류: " + e.getMessage());
+        }
     }
 }
 
