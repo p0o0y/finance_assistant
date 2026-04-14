@@ -9,7 +9,7 @@ import json
 import base64    
 from networkx import nodes
 import requests   
-import pymupdf as fitz         
+import fitz         
 
 import pickle
 
@@ -90,7 +90,7 @@ class CardRAGPipeline:
 
     def run(self, data_dir):
         all_docs = []
-        pdf_files = [f for f in os.listdir(data_dir) if f.startswith("신한") and f.endswith(".pdf")]
+        pdf_files = [f for f in os.listdir(data_dir) if f.startswith("") and f.endswith(".pdf")]
         print(f" 총 {len(pdf_files)}개의 PDF")
 
         for filename in pdf_files:
@@ -100,7 +100,7 @@ class CardRAGPipeline:
                 raw_text = "".join([p.get_text() for p in doc_free])  
             # 2. 품질 체크 
             if self.is_bad_quality(file_path): 
-                print(f" {filename}: 품질 낮음 -> CLOVA OCR 실행")
+                print(f" {filename}: 품질 낮음 -> ✔️ CLOVA OCR 실행")
                 raw_text = self.extract_with_clova(file_path)
             else:
                 print(f"{filename}: 무료 추출 성공")
@@ -114,12 +114,13 @@ class CardRAGPipeline:
         # 3. 인덱싱
         if all_docs:
             nodes = self.splitter.get_nodes_from_documents(all_docs) # 문서를 512자 node로 쪼개기 
+            
             for node in nodes:
                 c_name = node.metadata.get("card_name", "unknown")
                 node.text=f"[{c_name}] "+node.text # 카드명 붙이기
 
             # 노드 저장 (BM25 전용)
-            with open("./data/nodes.pkl", "wb") as f:
+            with open("./ch01/data/nodes.pkl", "wb") as f:
                 pickle.dump(nodes, f)
             storage_context = StorageContext.from_defaults(vector_store=self.vector_store)
 
@@ -128,4 +129,4 @@ class CardRAGPipeline:
 
 if __name__ == "__main__":
     pipeline = CardRAGPipeline()
-    pipeline.run("./data/card_pdf")
+    pipeline.run("./ch01/data/card_pdf")

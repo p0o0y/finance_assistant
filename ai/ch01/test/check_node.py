@@ -5,7 +5,7 @@ with open("../data/nodes.pkl", "rb") as f:
     nodes = pickle.load(f)
 
 # 2. 전체 요약 보기
-print(f"📊 총 노드 개수: {len(nodes)}개")
+print(f" 총 노드 개수: {len(nodes)}개")
 print("-" * 50)
 
 # 3. 첫 번째 노드 내용 상세 확인
@@ -22,6 +22,6 @@ for node in nodes:
     name = node.metadata.get("card_name", "Unknown")
     card_counts[name] = card_counts.get(name, 0) + 1
 
-print("📇 카드별 노드 생성 현황:")
+print("d 카드별 노드 생성 현황:")
 for name, count in card_counts.items():
     print(f" - {name}: {count}개 조각")

@@ -1,7 +1,7 @@
 import time
 import os
 
-# 이 설정을 넣으면 다운로드 진행 상황이 터미널에 보일 수도 있습니다.
+# 설정을 넣으면 다운로드 진행 상황이 터미널에 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 print(" [1/3] 라이브러리 로딩 중...")

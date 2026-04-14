@@ -8,9 +8,13 @@ from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.node_parser import MarkdownNodeParser, SentenceSplitter
 
+from ch01.utils.config import Config
+
 # .env 로드
 load_dotenv()
+config = Config()
 
+    
 class CardRAGPipeline:
     def __init__(self):
         # 1. 임베딩 모델 설정
@@ -18,7 +22,7 @@ class CardRAGPipeline:
         
        
         self.parser = LlamaParse(
-            api_key=os.getenv("LLAMA_CLOUD_API_KEY"),
+            api_key=config.LLAMA_CLOUD_API_KEY,
             result_type="markdown", 
             num_workers=4,
             language="ko",
@@ -26,19 +30,19 @@ class CardRAGPipeline:
             vendor_multimodal_model_name="openai-gpt4o",
             parsing_instruction="""
             이 문서는 카드 상품 안내서입니다. 
-    1. 텍스트 추출 시 생략 없이 문서의 모든 정보를 상세히 기술하세요.
-    2. 모든 표(Table)는 마크다운 형식을 유지하며 데이터 누락 없이 변환하세요.
-    3. 유의사항 및 각주(Footnotes)에 포함된 세부 기호와 텍스트를 모두 포함해 주세요.
-    """
+             1. 텍스트 추출 시 생략 없이 문서의 모든 정보를 상세히 기술하세요.
+            2. 모든 표(Table)는 마크다운 형식을 유지하며 데이터 누락 없이 변환하세요.
+            3. 유의사항 및 각주(Footnotes)에 포함된 세부 기호와 텍스트를 모두 포함해 주세요.
+             """
         )
         
-    
+
         self.vector_store = PGVectorStore.from_params(
-            host=os.getenv("DB_HOST", "localhost"),
-            port=os.getenv("DB_PORT", "5433"),
-            database=os.getenv("DB_NAME", "finance_db"),
-            user=os.getenv("DB_USER", "postgres"),
-            password=os.getenv("DB_PASS", "1111"),
+            host=config.DB_HOST,
+            port=config.DB_PORT,
+            database=config.DB_NAME,
+            user=config.DB_USER,
+            password=config.DB_PASS,
             table_name="financial_knowledge",
             embed_dim=1024
         )
@@ -47,7 +51,7 @@ class CardRAGPipeline:
         pdf_files = [f for f in os.listdir(data_dir) if f.startswith("신한_SOL") and f.endswith(".pdf")]
         
         if not pdf_files:
-            print("❌ 처리할 PDF 파일이 없습니다.")
+            print(" 처리할 PDF 파일이 없습니다.")
             return
 
         print(f"총 {len(pdf_files)}개의 PDF 분석 ")
