@@ -16,11 +16,12 @@ from llama_index.llms.ollama import Ollama
 from qdrant_client import QdrantClient
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from llama_index.core.vector_stores import MetadataFilters, MetadataFilter
+from offreport import router as report_router
 
 load_dotenv()
 set_global_handler("simple") # 디버깅용 
 app = FastAPI()
-
+app.include_router(report_router)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-m3", device=device)
 
@@ -92,7 +93,6 @@ async def ask_rag(request: ChatRequest):
     enriched_query = (f"사용자 소비 리포트: {request.user_report}\n" f"질문: {request.query}")
     query_bundle = QueryBundle(enriched_query)
 
-
     # step 1 : hybrid retrieval 
     try:
         initial_nodes: List[NodeWithScore] = vector_retriever.retrieve(query_bundle)
@@ -163,6 +163,3 @@ async def ask_rag(request: ChatRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000) 
-
-
-

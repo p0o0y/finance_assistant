@@ -43,10 +43,10 @@ class CardRAGPipeline:
 
             print(f"{os.path.basename(file_path)}: 글자수 {text_len}, 이미지 {img_count}개")
 
-            if text_len < 5000: return True
+            if text_len < 3000: return True
             ko_count = len(re.findall(r'[가-힣]', full_text))
             if text_len > 0 and (ko_count / text_len) < 0.4: return True
-            if img_count >= 2 and text_len < 3000: return True
+            if img_count >= 5 and text_len < 3000: return True
             return False
 
     def extract_with_clova(self, file_path):
@@ -81,7 +81,7 @@ class CardRAGPipeline:
 
     def run(self, data_dir):
         all_docs = []
-        pdf_files = [f for f in os.listdir(data_dir) if f.startswith("") and f.endswith(".pdf")]
+        pdf_files = [f for f in os.listdir(data_dir) if f.startswith("하나") and f.endswith(".pdf")]
         print(f" {len(pdf_files)}개의 PDF")
 
         for filename in pdf_files:
@@ -104,7 +104,6 @@ class CardRAGPipeline:
             else:
                 card_type = "기타"
             
-    
             metadata = {
                 "card_name": card_name,
                 "doc_type": "card_benefits",
