@@ -25,6 +25,10 @@ public class CardTransaction {
     @Column(nullable = false, precision = 10, scale = 0)
     private BigDecimal amount; // 승인 금액
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "merchant_category_id", nullable = true)
+    private MerchantCategory merchantCategory;
+
     @Column(nullable = false)
     private String storeName; // 가맹점명
 
