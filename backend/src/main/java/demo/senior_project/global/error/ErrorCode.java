@@ -32,8 +32,8 @@ public enum ErrorCode {
     CODEF_API_CARD_ERROR(HttpStatus.BAD_REQUEST,"CD002","카드 관련 CODEF API 연결 실패"),
     CARD_NOT_FOUND(HttpStatus.BAD_REQUEST,"CD001","카드를 찾을 수 없습니다"),
 
-    CATEGORY_LLM_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "L001", "llm 카테고리 파싱 실퍂 ");
-
+    CATEGORY_LLM_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "L001", "llm 카테고리 파싱 실패 "),
+    CATEGORY_LLM_FAIL2(HttpStatus.INTERNAL_SERVER_ERROR, "L002", "llm 카테고리 파싱 시간 초과");
     private final HttpStatus httpStatus;
     private final String errorCode;
     private final String errorMessage;
