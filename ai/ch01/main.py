@@ -36,13 +36,12 @@ vector_store = PGVectorStore.from_params(
     table_name="financial_knowledge",
     embed_dim=1024,
     hybrid_search=True,
-    hybrid_search=False 
 )
 index = VectorStoreIndex.from_vector_store(vector_store, embed_model=embed_model)
 vector_retriever = index.as_retriever(similarity_top_k=60)
 
 #  BM25
-NODES_PATH = "./ch01/data/nodes.pkl"
+NODES_PATH = "./data/nodes.pkl"
 bm25_retriever = None
 if os.path.exists(NODES_PATH):
     with open(NODES_PATH, "rb") as f:
@@ -53,7 +52,7 @@ if os.path.exists(NODES_PATH):
         )
     print(f" BM25 리트리버 준비 완료 (노드 수: {len(nodes_from_pkl)})")
 else:
-    print(" nodes.pkl이 없어 dense 검색만 사용 ")
+    print(" nodes.pkl이 존재하지 않습니다. dense 검색만 사용 ")
    
 
 # slm binary filter 
@@ -94,26 +93,32 @@ def _run_reranker(nodes, query_bundle):
 @app.post("/ask")
 async def ask_rag(request: ChatRequest):
     print(f"\n[요청] 질문: {request.query}")
-    query_bundle = QueryBundle(request.query)
-
+    enriched_query = request.query
+    if request.user_report:
+        enriched_query = (
+            f"사용자 요청: {request.query}\n"
+            f"사용자 소비 패턴: {request.user_report}"
+        )
+    query_bundle = QueryBundle(enriched_query)
+    
     # step 1 : hybrid retrieval 
     try:
         vector_nodes: List[NodeWithScore] = vector_retriever.retrieve(query_bundle)
-        print(f"벡터 검색 완료: {len(vector_nodes)}개 후보 ")
+        print(f"[의미 벡터] 검색 완료")
         for i, n in enumerate(vector_nodes[:3]):  # 상위 3
-            print(f"  Dense Top{i+1}: score={round(n.score or 0, 4)} | {n.node.text[:80].strip()}")
+            print(f" 📜Dense Top{i+1}: score={round(n.score or 0, 4)} | {n.node.text[:400].strip()}")
     except Exception as e:
         print(f"벡터 검색 에러: {e}")
         vector_nodes = []
 
     try:
-        bm25_nodes = List[NodeWithScore] =(
+        bm25_nodes : List[NodeWithScore] =(
             bm25_retriever.retrieve(request.query)
             if bm25_retriever else []
         )
-        print(f"[BM25] {len(bm25_nodes)}개 후보")
+        print(f"[BM25] 검색 완료")
         for i, n in enumerate(bm25_nodes[:3]):  # 상위 3
-            print(f"  BM25 Top{i+1}: score={round(n.score or 0, 4)} | {n.node.text[:80].strip()}")
+            print(f" 📜 BM25 Top{i+1}: score={round(n.score or 0, 4)} | {n.node.text[:400].strip()}")
     
     except Exception as e:
         print(f"BM25 실패, Dense만 사용: {e}")
@@ -137,9 +142,9 @@ async def ask_rag(request: ChatRequest):
             executor,
             lambda: _run_slm_filter(initial_nodes, query_bundle)
         )
-        print(f"[SLM Filter] {len(filtered_nodes)}개 잔류")
+        print(f"🌤️ [SLM Filter] {len(filtered_nodes)}개 추출")
         for i, n in enumerate(filtered_nodes):
-            print(f"  SLM [{i+1}]: score={round(n.score or 0, 4)} | 카드={n.metadata.get('card_name','?')} | {n.node.text[:80].strip()}")
+            print(f" ✔️SLM [{i+1}]: score={round(n.score or 0, 4)} | 카드={n.metadata.get('card_name','?')} | {n.node.text[:500].strip()}")
    
     except Exception as e:
         print(f" SLM 필터 실패, 전체 후보 사용: {e}")
