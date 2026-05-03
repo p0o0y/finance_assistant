@@ -110,7 +110,7 @@ async def ask_rag(request: ChatRequest):
             executor,
             lambda: _run_slm_filter(initial_nodes, query_bundle)
         )
-        print(f"[SLM Filter] {len(filtered_nodes)}개 잔류")
+        print(f"🌤️ [SLM Filter] {len(filtered_nodes)}개 추출")
         for i, n in enumerate(filtered_nodes):
             print(f"  SLM [{i+1}]: score={round(n.score or 0, 4)} | 카드={n.metadata.get('card_name','?')} | {n.node.text[:400].strip()}")
 
