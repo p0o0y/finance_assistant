@@ -23,5 +23,5 @@ public interface CardTransactionRepository extends JpaRepository<CardTransaction
             @Param("dates") List<LocalDateTime> dates
     );
 
-    List<CardTransaction>findByUserCardAndApprovedAtBetween(User user, LocalDateTime start, LocalDateTime end);
+    List<CardTransaction>findByUserCard_UserAndApprovedAtBetween(User user, LocalDateTime start, LocalDateTime end);
 }

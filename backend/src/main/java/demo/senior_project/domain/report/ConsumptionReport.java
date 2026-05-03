@@ -39,15 +39,19 @@ public class ConsumptionReport {
     private String topStores;  // JSON [{"name":"스타벅스","count":12}]
 
     @Column(columnDefinition = "TEXT")
+    private String topStoresByAmount;  
+    
+    @Column(columnDefinition = "TEXT")
     private String reportText;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public void update(String reportText,String categoryStats,String topStores, Long totalAmount){
+    public void update(String reportText,String categoryStats,String topStores, String topStoresByAmount, Long totalAmount){
         this.reportText=reportText;
         this.categoryStats=categoryStats;
         this.topStores=topStores;
+        this.topStoresByAmount = topStoresByAmount;
         this.totalAmount=totalAmount;
     }
 }

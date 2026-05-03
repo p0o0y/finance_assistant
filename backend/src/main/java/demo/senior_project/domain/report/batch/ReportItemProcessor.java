@@ -47,7 +47,7 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
         LocalDateTime end = date.withDayOfMonth(date.lengthOfMonth()).atTime(23,59,59);
 
 
-        List<CardTransaction> transactions = cardTransactionRepository.findByUserCardAndApprovedAtBetween(user,start,end);
+        List<CardTransaction> transactions = cardTransactionRepository.findByUserCard_UserAndApprovedAtBetween(user,start,end);
 
         if(transactions.isEmpty()){
             log.info("processor : User {} 거래내역 없음 -> 스킵",yearMonth);
@@ -78,6 +78,25 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                     return store;
                 })
                 .toList();
+        // 금액 기준 top 5 가게 
+        List<Map<String, Object>> topAmountStores = transactions.stream()
+                .filter(t->t.getStoreName()!=null)
+                .collect(Collectors.groupingBy(
+                        CardTransaction::getStoreName,
+                        Collectors.summingLong(t -> t.getAmount().longValue())
+                ))
+                .entrySet().stream()
+                // 금액 내림차순
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(5)
+                .map(e -> {
+                    Map<String, Object> store = new LinkedHashMap<>();
+                    store.put("name", e.getKey());
+                    store.put("total_amount", e.getValue());
+                    return store;
+                })
+                .toList();
+        
         // report 호출
         Map<String ,Object> requestBody = new LinkedHashMap<>();
         requestBody.put("user_id",user.getUserId());
@@ -85,6 +104,7 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
         requestBody.put("total_amount",totalAmount);
         requestBody.put("category_stats",categoryStats);
         requestBody.put("top_stores",topStores);
+        requestBody.put("top_stores_by_amount", topAmountStores);
         String reportText;
         try {
             Map response = restClient.post()
@@ -108,6 +128,7 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                 // 조회 시 다시 Map으로 파싱
                 .categoryStats(objectMapper.writeValueAsString(categoryStats))
                 .topStores(objectMapper.writeValueAsString(topStores))
+                .topStoresByAmount(objectMapper.writeValueAsString(topAmountStores))
                 .reportText(reportText)
                 .createdAt(LocalDateTime.now())
                 .build();
