@@ -143,7 +143,7 @@ async def ask_rag(request: ChatRequest):
     
     try:
         response = final_llm.complete(
-            f"{system_prompt}\n\n질문: {request.query}\n답변:"
+            f"{system_prompt}\n질문: {request.query}\n답변:"
         )
         answer = response.text
     except Exception as e:
