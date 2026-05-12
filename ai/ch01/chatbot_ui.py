@@ -115,7 +115,7 @@ for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(
             f'<div style="display:flex;justify-content:flex-end;">'
-            f'<div class="user-bubble">🧑 {msg["content"]}</div></div>',
+            f'<div class="user-bubble">🧑{msg["content"]}</div></div>',
             unsafe_allow_html=True
         )
     else:
@@ -155,13 +155,13 @@ if prompt := st.chat_input("카드 혜택에 대해 물어보세요..."):
         except requests.exceptions.ConnectionError:
             st.session_state.messages.append({
                 "role": "assistant",
-                "content": "❌ FastAPI 서버에 연결할 수 없어요. `uvicorn main:app` 이 실행 중인지 확인해주세요.",
+                "content": " FastAPI 서버에 연결할 수 없어요. `uvicorn main:app` 이 실행 중인지 확인해주세요.",
                 "sources": [],
             })
         except Exception as e:
             st.session_state.messages.append({
                 "role": "assistant",
-                "content": f"❌ 오류: {str(e)}",
+                "content": f" 오류: {str(e)}",
                 "sources": [],
             })
 
