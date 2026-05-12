@@ -79,6 +79,12 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                     Map<String, Object> store = new LinkedHashMap<>();
                     store.put("name", e.getKey());
                     store.put("count", e.getValue());
+                    String storeType = transactions.stream()
+                            .filter(t -> e.getKey().equals(t.getStoreName()) && t.getStoreType() != null)
+                            .map(CardTransaction::getStoreType)
+                            .findFirst()
+                            .orElse("기타");
+                    store.put("type",storeType);
                     return store;
                 })
                 .toList();
@@ -98,6 +104,12 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                     Map<String, Object> store = new LinkedHashMap<>();
                     store.put("name", e.getKey());
                     store.put("total_amount", e.getValue());
+                    String storeType = transactions.stream()
+                            .filter(t -> e.getKey().equals(t.getStoreName()) && t.getStoreType() != null)
+                            .map(CardTransaction::getStoreType)
+                            .findFirst()
+                            .orElse("기타");
+                    store.put("type", storeType);
                     return store;
                 })
                 .toList();

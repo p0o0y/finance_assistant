@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 
-SPRING_BASE = "http://localhost:8080"
+SPRING_BASE = "http://163.180.160.37:8080"
 st.set_page_config(
     page_title="카드 혜택 추천 챗봇",
     page_icon="💳",
@@ -12,9 +12,18 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Noto Sans KR', sans-serif; }
-    .stApp { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; }
-    .main-header { text-align: center; padding: 24px 0 12px; }
+
+    html, body, [class*="css"] {
+        font-family: 'Noto Sans KR', sans-serif;
+    }
+    .stApp {
+    background: linear-gradient(135deg, #f4f7fb, #dbeafe, #eff6ff);
+    min-height: 100vh;
+    }
+    .main-header {
+        text-align: center;
+        padding: 24px 0 12px;
+    }
     .main-header h1 {
         font-size: 2rem; font-weight: 700;
         background: linear-gradient(135deg, #667eea, #f093fb);
@@ -29,11 +38,18 @@ st.markdown("""
         font-size: 0.95rem; line-height: 1.6;
     }
     .bot-bubble {
-        background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-        color: #e8e8f0; padding: 14px 18px; border-radius: 18px 18px 18px 4px;
-        margin: 8px auto 8px 0; max-width: 78%; width: fit-content;
-        word-break: break-word; backdrop-filter: blur(8px);
-        font-size: 0.95rem; line-height: 1.75;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #1e3a5f;
+        padding: 14px 18px;
+        border-radius: 18px 18px 18px 4px;
+        margin: 8px auto 8px 0;
+        max-width: 78%;
+        width: fit-content;
+        word-break: break-word;
+        backdrop-filter: blur(8px);
+        font-size: 0.95rem;
+        line-height: 1.75;
     }
     .source-tag {
         display: inline-block; background: rgba(102,126,234,0.2);
