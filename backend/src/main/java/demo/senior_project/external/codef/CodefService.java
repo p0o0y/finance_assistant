@@ -183,7 +183,11 @@ public class CodefService {
                 .collect(Collectors.toMap(UserCard::getLastFourDigits, c -> c));
 
         List<CompletableFuture<Void>> codefFutures = connectedCompanies.stream()
+                // [nio-8080-exec-1] 카드사 목록 순회 시작
                 .map(company -> CompletableFuture.runAsync(() -> {
+                    // [nio-8080-exec-1] 각 카드사마다 codefTaskExecutor에 쪽지 던짐 thenRun등록
+                    // runAsync() 호출 즉시 반환, 람다를 codefexecutor큐에 넣어서 노는 스레드가 꺼내서 실행
+                    // 여기서부터는 [codef-1], [codef-2], [codef-3]이 각각 실행
                     HashMap<String, Object> parameterMap = new HashMap<>();
                     parameterMap.put("organization", company.getCode());
                     parameterMap.put("connectedId", connectedId);
@@ -193,30 +197,35 @@ public class CodefService {
                     parameterMap.put("inquiryType", "1");
                     parameterMap.put("memberStoreInfoType", "1");
             try {
-                log.info("🔢main ) codef api 호출 {}  ",company.getDescription());  //codef 호출 네트워크 IO
-                String response = easyCodef.requestProduct(
+                log.info("🔢 main ) codef api 호출 {}  ",company.getDescription());
+                //codef 호출 네트워크 IO , 응답 올 때까지 codef-1,2,3각자 다른 카드사 동시 호출
+                String response = easyCodef.requestProduct( //각자 다른 스레드에서 실행
                         "/v1/kr/card/p/account/approval-list", EasyCodefServiceType.DEMO, parameterMap);
                 TransactionListResponse responseDto = objectMapper.readValue(response, TransactionListResponse.class);
                 if (responseDto.isSuccess() && responseDto.getData() != null)
                     SaveTransactions(responseDto.getData(), cardMap);
+                // SaveTransactions() 안에서 classifyAndSave() 호출 , 안에서 allFutures.get(15초) 대기
+                // codef-1이 여기서 LLM 25개 끝날 때까지 기다림
             } catch (Exception e) {
                 log.error("{} 카드사 동기화 실패: {}", company.getCode(), e.getMessage());}
             }, codefTaskExecutor))
             .toList();
 
+        //future묶어서 상위 future만들기 하고 나중에 일 다 끝나면 모든 카드사 동기화완료 로그찍어 예약
             CompletableFuture.allOf(codefFutures.toArray(new CompletableFuture[0]))
-                    .thenRun(()->{
+                    .thenRun(()->{ // codef - 1,2,3~ 드레드중 가장 늦게 끝나는게 실행시킴
                         log.info(" sub thread 모든 카드사 거래내역 동기화 및 llm 분류 완료 ");
                     })
                     .exceptionally(ex->{
                         log.error("동기화 중 오류 발생");
                         return null;}
                     );
+            // nio0exec-1은 여기까지 실행하고 메서드종료하고 다른 http 받으러감
             log.info("🔢main 할 일 끝 접수만 ");
 
     }
 
-    // 외부데이터 ->1차필터 (우리 시스템 형식 ) -> 2차 (DB대조) 이미 있는지 ->3차 새로 저장할거 중에 이미 카테고리 아는건지 ->최종처리는 분류가 필요한 데이터만 가지고감
+    // 외부데이터 ->1차필터 (우리 시스템 형식) -> 2차 (DB대조) 이미 있는지 ->3차 새로 저장할거 중에 이미 카테고리 아는건지 ->최종처리는 분류가 필요한 데이터만 가지고감
     private void SaveTransactions(List<TransactionListResponse.TransactionInfo> transactions, Map<String, UserCard> cardMapByLast4) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -238,7 +247,7 @@ public class CodefService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        //2 . DB 기존 데이터 불러오기 (N->1쿼리) for X
+        //2차 필터 N+1방지 DB중복 체크 - 기존 데이터 불러오기 (N->1쿼리) for X
         Set<String> existingKeys = cardTransactionRepository
                 .findByUserCardInAndApprovedAtIn(
                         parsed.stream().map(p -> p.getCard()).distinct().toList(),
@@ -260,6 +269,7 @@ public class CodefService {
         List<String> storeNames = newOnes.stream().map(p -> p.getInfo().getStoreName()).distinct().toList();
 
         Map<String, String> merchantCache = merchantCategoryRepository
+                //DB쿼리 1번 In절
                 .findAllByBizNoInAndStoreNameIn(bizNos, storeNames)
                 .stream()
                 .collect(Collectors.toMap(
@@ -303,20 +313,31 @@ public class CodefService {
             if (!pendingLLMs.containsKey(key)) {
                 log.info("⏩ sub 비동기 요청 예약: {}", storeName);
                 CompletableFuture<String> future = asyncService.classifyAsync(storeName, bizNo, storeType);
+                /*    asyncService.classifyAsync() 내부:
+               openAIService.classifyTransaction(...) → Mono<String> 만들기
+               .toFuture() → 이 순간 Netty가 OpenAI에 HTTP 요청 전송 시작
+               빈 CompletableFuture 상자 즉시 반환
+                [codef-1]은 기다리지 않고 즉시 다음 줄로
+               */
                 pendingLLMs.put(key, new PendingLLM(bizNo, storeName, future));
             }
         }
+        //openai로 25개 동시 요청 + pendingLLMS 25개 빈 상자 보관 중 , codef-1은 블로킹 없이 여기까지
+
         log.info("⏩ sub ) 모든 비동기 결과 수집 시작 (future.get 구간)");
         long collectStart = System.currentTimeMillis();
         // 비동기 결과 수집 및 MerchantCategory 생성 기본 라틴 문자로 변환
+
 
         CompletableFuture<Void> allFutures = CompletableFuture.allOf( // future다 채워질 때 까지 기다리는 메서드 , 배열만 받음
                 pendingLLMs.values().stream()
                         .map(PendingLLM::future)
                         .toArray(CompletableFuture[]::new)
         );
-        //main 이 여기서 처음으로 멈춤 - 최대 15초 대기  allfuture.get 대기
+
+        //main 이 여기서 처음으로 멈춤 - 최대 15초 대기  codef -1 이 allfuture.get 대기
         try {
+            //codef 여기서 최대 15블로킹 , reactor-http-nio가 openai응답 받아서 채워
             allFutures.get(15, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             log.warn(" LLM 전체 타임아웃 ");
@@ -350,6 +371,7 @@ public class CodefService {
                         .build())
                 .toList();
 
+        //jdbctemplate.batchupdate로 한번에 저장 하고 codef-1은 완료후 메서드 종료
         transactionsSaveService.saveAll(toSaveMerchants, toSave);
 
         log.info(" DB 저장 완료");

@@ -93,8 +93,8 @@ public class OpenAIService {
                     .uri("/chat/completions")
                     .bodyValue(body)
                     .retrieve()
-                    .bodyToMono(String.class) //할 일 예약
-                    .map(response -> {
+                    .bodyToMono(String.class) //할 일 예약 reactor-http-nio
+                    .map(response -> { //llm 스레드가
                         //응답이 오면 실행될 로직 - 직원 스레드 나중 처리
                         try {
                             JsonNode root = objectMapper.readTree(response);
@@ -129,21 +129,7 @@ public class OpenAIService {
                 "11. 구독OTT: 넷플,티빙,유튜브프리미엄 등 구독서비스\n" +
                 "12. 편의점 : 24시간 편의 시설 "+
                 "13. 기타: 위 항목에 절대 해당하지 않거나, 가맹점명을 통해 용도를 전혀 유추할 수 없는 경우 (최후의 수단)";
-/*
-* public enum CategoryGroup {
-    CAFE("카페,간식", List.of("커피", "제과", "아이스크림", "디저트","스타벅스","투썸","이디야")),
-    HOSPITAL("병원", List.of("치과", "한방병원", "병원", "의원", "약국")),
-    MART("마트", List.of("마트","홈플","슈퍼", "유통")),
-    CONVENIENCE("편의점",List.of("GS25","세븐일레븐","CU")),
-    FOOD("음식점", List.of("패스트푸드", "휴게음식점", "식당", "한식", "중식", "일식", "양식", "분식")),
-    SHOPPING("쇼핑", List.of("쇼핑", "전자상거래", "백화점", "아울렛","무신사","에이블리")),
-    TRANSPORT("교통", List.of("교통", "택시", "버스", "철도", "주유")),
-    EDUCATION("교육", List.of("학원", "학교", "독서실")),
-    BEAUTY("미용", List.of("미용실", "헤어", "네일")),
-    HOUSING("주거통신", List.of("통신", "관리비", "전기", "수도","가스")),
-    HOBBY("취미,여가",List.of("놀이동산","오락","게임","웹툰"));
-    private final String categoryName;
-    private final List<String> keywords;*/
+
         String userMessage = String.format("가맹점명: %s, 가게사업자번호: %s, 가게타입: %s", storeName, bizNo,storeType);
 
         Map<String, Object> schemaMap = Map.of(  //  JSON 스키마

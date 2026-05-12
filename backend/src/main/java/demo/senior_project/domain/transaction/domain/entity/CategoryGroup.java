@@ -15,7 +15,7 @@ public enum CategoryGroup {
     BEAUTY("미용", List.of("미용실", "헤어", "네일")),
     HOUSING("주거통신", List.of("통신", "관리비", "전기", "수도","가스")),
     HOBBY("취미,여가",List.of("놀이동산","오락","게임","웹툰")),
-    OTT("구독OTT",List.of("넷플릭스","지니","웹툰","티빙","웨이브"));
+    OTT("구독OTT",List.of("넷플릭스","지니","웹툰","티빙","웨이브","유튜브","디즈니","스포티파이","정기","납부"));
     private final String categoryName;
     private final List<String> keywords;
 
