@@ -78,7 +78,7 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                     return store;
                 })
                 .toList();
-        // 금액 기준 top 5 가게 
+        // 금액 기준 top 5 가게
         List<Map<String, Object>> topAmountStores = transactions.stream()
                 .filter(t->t.getStoreName()!=null)
                 .collect(Collectors.groupingBy(
@@ -96,7 +96,7 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                     return store;
                 })
                 .toList();
-        
+
         // report 호출
         Map<String ,Object> requestBody = new LinkedHashMap<>();
         requestBody.put("user_id",user.getUserId());
