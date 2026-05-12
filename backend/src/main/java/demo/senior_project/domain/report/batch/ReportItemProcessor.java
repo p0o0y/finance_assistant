@@ -53,24 +53,28 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
             log.info("processor : User {} 거래내역 없음 -> 스킵",yearMonth);
             return null;
         }
-        //1. total
+        //1. total 총액
         long totalAmount = transactions.stream()
                 .mapToLong(t->t.getAmount().longValue())
                 .sum();
+
         //2. 카테고리 별 지출 groupingBy(기준, 집계방법)
         Map<String,Long> categoryStats = transactions.stream()
                 .filter(t->t.getStoreType()!=null)
-                .collect(Collectors.groupingBy(CardTransaction::getStoreType,Collectors.summingLong(t->t.getAmount().longValue())));
-        //3.자주 간 가맹점 Top 5
+                .collect(Collectors.groupingBy(CardTransaction::getStoreType,
+                        Collectors.summingLong(t->t.getAmount().longValue())));
+
+        //3.자주 간 가맹점 Top 3
         List<Map<String, Object>> topStores = transactions.stream()
                 .collect(Collectors.groupingBy(
                         CardTransaction::getStoreName,
                         Collectors.counting()
                 ))
                 .entrySet().stream()
+                .filter(e->e.getValue()>=3)
                 // 방문 횟수 내림차순
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(5)
+                .limit(4)
                 .map(e -> {
                     Map<String, Object> store = new LinkedHashMap<>();
                     store.put("name", e.getKey());
@@ -78,7 +82,8 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                     return store;
                 })
                 .toList();
-        // 금액 기준 top 5 가게
+
+        // 금액 기준 top  가게
         List<Map<String, Object>> topAmountStores = transactions.stream()
                 .filter(t->t.getStoreName()!=null)
                 .collect(Collectors.groupingBy(
@@ -88,7 +93,7 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                 .entrySet().stream()
                 // 금액 내림차순
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(5)
+                .limit(3)
                 .map(e -> {
                     Map<String, Object> store = new LinkedHashMap<>();
                     store.put("name", e.getKey());
@@ -97,14 +102,38 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                 })
                 .toList();
 
+        // 정기결제
+        List<String> autoPayments = transactions.stream()
+                .map(CardTransaction::getStoreName)
+                .filter(name -> name != null && (
+                        name.contains("자동") || name.contains("정기") || name.contains("납부") ||
+                                name.contains("넷플릭스") || name.contains("유튜브") ||
+                                name.contains("티빙") || name.contains("스포티파이") ||
+                                name.contains("디즈니") || name.contains("웨이브")
+                ))
+                .distinct()
+                .toList();
+
         // report 호출
         Map<String ,Object> requestBody = new LinkedHashMap<>();
         requestBody.put("user_id",user.getUserId());
         requestBody.put("year_month",yearMonth);
         requestBody.put("total_amount",totalAmount);
-        requestBody.put("category_stats",categoryStats);
+        // 카테고리 top3만
+        Map<String, Long> top3Categories = categoryStats.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(3)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+
+        requestBody.put("category_stats",top3Categories);
         requestBody.put("top_stores",topStores);
         requestBody.put("top_stores_by_amount", topAmountStores);
+        requestBody.put("auto_payments", autoPayments);
         String reportText;
         try {
             Map response = restClient.post()
