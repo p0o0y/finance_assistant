@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_BASE = "http://localhost:8000"
+API_BASE = "http://163.180.160.37:8000"
 
 st.set_page_config(
     page_title="카드 혜택 추천 챗봇",
@@ -17,8 +17,8 @@ st.markdown("""
         font-family: 'Noto Sans KR', sans-serif;
     }
     .stApp {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-        min-height: 100vh;
+    background: linear-gradient(135deg, #f4f7fb, #dbeafe, #eff6ff);
+    min-height: 100vh;
     }
     .main-header {
         text-align: center;
@@ -52,7 +52,7 @@ st.markdown("""
     .bot-bubble {
         background: rgba(255,255,255,0.08);
         border: 1px solid rgba(255,255,255,0.15);
-        color: #e8e8f0;
+        color: #1e3a5f;
         padding: 14px 18px;
         border-radius: 18px 18px 18px 4px;
         margin: 8px auto 8px 0;
@@ -78,7 +78,7 @@ st.markdown("""
         border: 1px solid rgba(255,255,255,0.2) !important;
         border-radius: 16px !important;
     }
-    .stChatInput textarea { color: white !important; }
+    .stChatInput textarea { color: black !important; }
     hr { border-color: rgba(255,255,255,0.1); }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }

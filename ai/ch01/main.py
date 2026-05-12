@@ -44,7 +44,7 @@ index = VectorStoreIndex.from_vector_store(
 
 
 # slm binary filter 
-slm_model = Ollama(model="qwen2.5:7b", request_timeout=60.0)
+slm_model = Ollama(model="qwen2.5:7b", request_timeout=60.0,system="You are a Korean financial document filter. Always respond in Korean. Answer only with Doc numbers and relevance scores in the exact format requested.")
 slm_filter = LLMRerank(llm=slm_model,top_n=15,     choice_batch_size=5 )
 
 # cross-encoder reranker
@@ -86,7 +86,6 @@ async def ask_rag(request: ChatRequest):
         similarity_top_k=60,
         sparse_top_k=40,
         vector_store_query_mode="hybrid",
-        filters=filters
     )   
 
     print(f"\n[요청] 사용자 query: {request.query}")

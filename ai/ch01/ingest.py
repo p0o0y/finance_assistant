@@ -21,18 +21,18 @@ class CardRAGPipeline:
         self.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-m3")
         self.splitter = SentenceSplitter(chunk_size=1024, chunk_overlap=200)
 
-        # Qdrant 클라이언트
+        # Qdrant 
         self.qdrant_client = QdrantClient(
             url=os.getenv("QDRANT_URL"),
             api_key=os.getenv("QDRANT_API_KEY"),
         )
 
-        # Dense + Sparse 동시 저장
+        # Dense + Sparse 
         self.vector_store = QdrantVectorStore(
             client=self.qdrant_client,
             collection_name="card_benefits",
             enable_hybrid=True,
-            fastembed_sparse_model="Qdrant/bm25"  # BM25 내장
+            fastembed_sparse_model="Qdrant/bm25" 
         )
 
     def is_bad_quality(self, file_path):
