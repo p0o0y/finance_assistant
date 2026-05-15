@@ -3,13 +3,15 @@ package demo.senior_project.domain.fastapi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
-
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import java.time.Duration;
 @Service
 public class CardRecommendationService {
     private final String fastApiUrl;
@@ -17,7 +19,14 @@ public class CardRecommendationService {
 
     public CardRecommendationService( @Value("${seraph.url}") String url) {
         this.fastApiUrl = url;
-        this.restClient =  RestClient.create();
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(120)); // RAG 파이프라인 대기
+
+        this.restClient = RestClient.builder()
+                .requestFactory(factory)
+                .build();
     }
 
     public CardResponse getRecommendation(String query, String userReport) {

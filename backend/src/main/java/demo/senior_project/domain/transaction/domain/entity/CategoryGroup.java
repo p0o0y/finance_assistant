@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum CategoryGroup {
-    CAFE("카페,간식", List.of("커피", "제과", "아이스크림", "디저트","스타벅스","투썸","이디야")),
+    CAFE("카페", List.of("커피", "제과", "아이스크림", "디저트","스타벅스","투썸","이디야")),
     HOSPITAL("병원", List.of("치과", "한방병원", "병원", "의원", "약국")),
     MART("마트", List.of("마트","홈플","슈퍼", "유통")),
     CONVENIENCE("편의점",List.of("GS25","세븐일레븐","CU")),
@@ -12,9 +12,9 @@ public enum CategoryGroup {
     SHOPPING("쇼핑", List.of("쇼핑", "전자상거래", "백화점", "아울렛","무신사","에이블리")),
     TRANSPORT("교통", List.of("교통", "택시", "버스", "철도", "주유")),
     EDUCATION("교육", List.of("학원", "학교", "독서실")),
-    BEAUTY("미용", List.of("미용실", "헤어", "네일")),
+    DELIVERY("배달", List.of("쿠팡이츠", "배달", "B마트","우아한형제들")),
     HOUSING("주거통신", List.of("통신", "관리비", "전기", "수도","가스")),
-    HOBBY("취미,여가",List.of("놀이동산","오락","게임","웹툰")),
+    HOBBY("여가",List.of("놀이동산","오락","게임","웹툰")),
     OTT("구독OTT",List.of("넷플릭스","지니","웹툰","티빙","웨이브","유튜브","디즈니","스포티파이","정기","납부"));
     private final String categoryName;
     private final List<String> keywords;

@@ -20,6 +20,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,7 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
         requestBody.put("user_id",user.getUserId());
         requestBody.put("year_month",yearMonth);
         requestBody.put("total_amount",totalAmount);
+
         // 카테고리 top3만
         Map<String, Long> top3Categories = categoryStats.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
@@ -142,11 +144,38 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                         LinkedHashMap::new
                 ));
 
+
+        Map<String, List<String>> categorizedStores = new LinkedHashMap<>();
+        for (Map<String, Object> store : topStores) {
+            String type = (String) store.get("type");
+            String name = (String) store.get("name");
+            if (!"기타".equals(type)) {
+                categorizedStores
+                        .computeIfAbsent(type, k -> new ArrayList<>())
+                        .add(name);
+            }
+        }
+
+        Map<String, List<String>> categorizedAmountStores = new LinkedHashMap<>();
+        for (Map<String, Object> store : topAmountStores) {
+            String type = (String) store.get("type");
+            String name = (String) store.get("name");
+            if (!"기타".equals(type)) {
+                categorizedAmountStores
+                        .computeIfAbsent(type, k -> new ArrayList<>())
+                        .add(name);
+            }
+        }
+        log.info("[Processor] 카테고리별 자주방문: {}", categorizedStores);
+        log.info("[Processor] 카테고리별 고액결제: {}", categorizedAmountStores);
+
+
         requestBody.put("category_stats",top3Categories);
-        requestBody.put("top_stores",topStores);
-        requestBody.put("top_stores_by_amount", topAmountStores);
+        requestBody.put("categorized_stores",categorizedStores);
+        requestBody.put("categorized_amount_stores", categorizedAmountStores);
         requestBody.put("auto_payments", autoPayments);
         String reportText;
+
         try {
             Map response = restClient.post()
                     .uri(seraph_repot_url)
@@ -161,6 +190,8 @@ public class ReportItemProcessor implements ItemProcessor<UserYearMonth, Consump
                     user.getUserId(), yearMonth, e.getMessage());
             reportText = "리포트 생성 실패";
         }
+
+
         return ConsumptionReport.builder()
                 .user(user)
                 .yearMonth(yearMonth)
