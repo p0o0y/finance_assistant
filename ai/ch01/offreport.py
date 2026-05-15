@@ -1,22 +1,22 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional,Dict
 from ollama import chat
 
 router = APIRouter()
 
 class ConsumptionReport(BaseModel):
-    편의점: Optional[str] = None
     카페: Optional[str] = None
+    병원: Optional[str] = None
+    마트: Optional[str] = None
+    편의점: Optional[str] = None
+    음식점: Optional[str] = None
     쇼핑: Optional[str] = None
-    배달: Optional[str] = None
     교통: Optional[str] = None
-    통신: Optional[str] = None
-    OTT구독: Optional[str] = None
-    통신: Optional[str] = None
-    영화: Optional[str] = None
+    주거통신: Optional[str] = None
+    OTT: Optional[str] = None
     여가: Optional[str] = None
-    마트_음식점: Optional[str] = None
+    배달: Optional[str] = None
     교육: Optional[str] = None
     월소비: Optional[str] = None
     고액가맹점: Optional[str] = None
@@ -32,10 +32,9 @@ class ReportRequest(BaseModel):
     year_month:str 
     total_amount:int
     category_stats: dict
-    top_stores: list
-    top_stores_by_amount: list
+    categorized_stores: Dict[str, List[str]]         # 카테고리별 자주방문
+    categorized_amount_stores: Dict[str, List[str]]  # 카테고리별 고액결제
     auto_payments: list
-
 
 
 @router.post("/askreport")
@@ -48,70 +47,73 @@ async def generate_report(request: ReportRequest):
         for i, (k, v) in enumerate(sorted_cats)
     ])
     
-    # 빈도 top3 
-    store_text = ", ".join([
-        f"{s['name']}({s.get('type','기타')}/자주감)"
-        for s in request.top_stores
-    ]) if request.top_stores else "없음"
+    # 빈도 top3  {"교통": ["카카오T강남", "카카오T역삼"], "카페,간식": ["이디야역삼점"]}
+    store_text = "\n".join([
+        f"{cat}: {', '.join(names)}"
+        for cat, names in request.categorized_stores.items()
+    ]) if request.categorized_stores else "없음"
 
 
-    # 고액 top3 + 가격
-    amount_text = ", ".join([
-        f"{s['name']}({s.get('type','기타')}/고액가맹점)"
-        for s in request.top_stores_by_amount
-    ]) if request.top_stores_by_amount else "없음"
+    amount_text = "\n".join([
+        f"{cat}: {', '.join(names)}"
+        for cat, names in request.categorized_amount_stores.items()
+    ]) if request.categorized_amount_stores else "없음"
+
 
     # 정기결제
     auto_text = ", ".join(request.auto_payments) if request.auto_payments else "없음"
+    
+     # 로그
+    print(f"\n=== [{request.year_month}] 입력 데이터 ===")
+    print(f"카테고리: {category_text}")
+    print(f"자주방문:\n{store_text}")
+    print(f"고액결제:\n{amount_text}")
+    print(f"정기결제: {auto_text}")
+    print(f"총소비: {request.total_amount:,}원")
 
-    prompt = (
-        f"아래 예시와 똑같은 형식으로 출력하고, 마지막에 소비패턴 한 줄 요약을 추가하세요.\n\n"
+    messages=[
+        {"role": "system",
+        "content": "당신은 소비데이터 분석하는 역할입니다.반드시 json형식으로만 출력하세요"
+          "1. 지점명/특수문자 제거 후 브랜드명만 남기기\n"
+            "2. 같은 브랜드 지점 합산\n"
+            "3. 소비패턴 한 두줄 요약 추가\n"
+            "절대로 카테고리를 바꾸지 마세요."
+        },
+        {"role": "user",
+         "content": (
+            f"[카테고리명 변환]\n"
+            f"카페,간식→카페 / 주거통신→통신 / 구독OTT→OTT구독\n"
+            f"취미,여가→여가 / 항공,여행→여가\n\n"
 
-        f"[예시 입력]\n"
-        f"카테고리: 카페,간식(주요), 쇼핑, 주거통신\n"
-        f"방문 가맹점: 스타벅스(카페,간식/자주감), GS25(편의점/자주감)\n"
-        f"고액 결제: 무신사(쇼핑/고액가맹점), 컬리(배달/고액가맹점)\n"
-        f"정기결제: KT통신요금자동, 넷플릭스\n\n"
-        f"[예시 출력]\n"
-        f"편의점: GS25\n"        
-        f"카페: 스타벅스\n"      
-        f"쇼핑: 무신사\n"
-        f"배달: 컬리\n"
-        f"OTT구독: 넷플릭스\n"
-        f"통신: KT\n"            
-        f"월소비: 416,000원\n"
-        f"정기결제: KT통신요금, 넷플릭스\n\n"
-        f"소비패턴: 카페와 쇼핑 위주의 소비, OTT 정기구독 중\n\n"  
+            f"[예시]\n"
+            f"입력 - 카페,간식: 스타벅스커피영통점, 이디야강남점\n"
+            f"출력 - 카페: 스타벅스/이디야\n\n"
+            f"입력 - 교통: 카카오T강남, 카카오T역삼\n"
+            f"출력 - 교통: 카카오T\n\n"
 
-        f"---\n"
-        f"[규칙]\n"
-        f"1. 지점명/특수문자 제거하고 브랜드명으로만 출력\n"
-        f"   (GS25영통점→GS25, 스타벅스커피→스타벅스, 이디야강남점->이디야)\n"
-        f"2. 같은 브랜드 지점은 합산 (GS25영통점+GS25강남점 → GS25)\n"
-        f"3. 편의점: GS25/CU/세븐일레븐/이마트24 중\n"
-        f"4. 쇼핑: 무신사/29CM/올리브영/지그재그/에이블리/W컨셉 중\n"
-        f"5. 배달: 배달의민족/쿠팡이츠/컬리 중\n"
-        f"6. OTT구독: 넷플릭스/유튜브/티빙/스포티파이/디즈니플러스 중\n"
-        f"7. 교통: 지하철/버스/택시/KTX 중\n"
-        f"8. 통신: SKT/KT/LG U+ 중\n"
-        f"9. 여가: 대한항공/하나투어/면세점/노래방/PC방/야놀자 중\n"
-        f"10. 마트: 이마트/홈플러스/롯데마트/다이소/농협하나로마트 중\n"
-        f"11. 자동/정기/납부 포함 가맹점은 정기결제로 분류\n"
-        f"13. 해당 없는 필드는 출력하지 말 것\n\n"  
-
-        f"[실제 입력]\n"
-        f"카테고리: {category_text}\n"
-        f"방문 가맹점: {store_text}\n"
-        f"고액 결제: {amount_text}\n"
-        f"정기결제 항목: {auto_text}\n\n"
-        f"[실제 출력]\n"
-    )
+            f"[실제 데이터]\n"
+            f"자주방문:\n{store_text}\n\n"
+            f"고액결제:\n{amount_text}\n\n"
+            f"정기결제: {auto_text}\n"
+            
+         )}
+    ] 
     
 
     try:
-        response = slm_model.complete(prompt)
-        raw = response.text.strip()
-        report_text = parse_and_fix(raw, request.total_amount)  # 추가
+        response = chat(model="qwen2.5:7b", messages=messages, format=ConsumptionReport.model_json_schema(),options={"temperature": 0.0})
+        print(f"=== 모델 raw 응답 ===\n{response.message.content}")
+        
+        # validate json and fix if needed
+        report = ConsumptionReport.model_validate_json(response.message.content)
+        report_dict = report.model_dump(exclude_none=True)
+        report_dict["월소비"]= f"{request.total_amount:,}원"
+        report_text = "\n".join([f"{k}: {v}" for k, v in report_dict.items()])
+        
+        print(f"\n=== 리포트 ===")
+        print(report_text)
+        print(f"==================\n")
+
         return {"report_text": report_text}
     except Exception as e:
         return {"report_text": f"리포트 생성 실패: {e}"}
