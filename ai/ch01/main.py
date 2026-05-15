@@ -42,9 +42,8 @@ index = VectorStoreIndex.from_vector_store(
     embed_model=embed_model
 )
 
-
 # slm binary filter 
-slm_model = Ollama(model="qwen2.5:7b", request_timeout=60.0,system="You are a Korean financial document filter. Always respond in Korean. Answer only with Doc numbers and relevance scores in the exact format requested.")
+slm_model = Ollama(model="qwen2.5:7b", request_timeout=60.0)
 slm_filter = LLMRerank(llm=slm_model,top_n=15,     choice_batch_size=5 )
 
 # cross-encoder reranker
@@ -86,6 +85,7 @@ async def ask_rag(request: ChatRequest):
         similarity_top_k=60,
         sparse_top_k=40,
         vector_store_query_mode="hybrid",
+        filters=filters
     )   
 
     print(f"\n[요청] 사용자 query: {request.query}")
@@ -109,7 +109,7 @@ async def ask_rag(request: ChatRequest):
             executor,
             lambda: _run_slm_filter(initial_nodes, query_bundle)
         )
-        print(f"🌤️ [SLM Filter] {len(filtered_nodes)}개 추출")
+        print(f" [SLM Filter] {len(filtered_nodes)}개 추출")
         for i, n in enumerate(filtered_nodes):
             print(f"  SLM [{i+1}]: score={round(n.score or 0, 4)} | 카드={n.metadata.get('card_name','?')} | {n.node.text[:400].strip()}")
 

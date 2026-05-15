@@ -1,13 +1,31 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from llama_index.llms.ollama import Ollama
-import json
+from typing import Optional
+from ollama import chat
 
 router = APIRouter()
-slm_model = Ollama(model="qwen2.5:7b", 
-                   request_timeout=120.0,
-                   temperature=0.0,
-                   system="당신은 소비데이터 분석하는 역할입니다. 지시된 형식 외 어떤 문장도 추가하지 마세요.")
+
+class ConsumptionReport(BaseModel):
+    편의점: Optional[str] = None
+    카페: Optional[str] = None
+    쇼핑: Optional[str] = None
+    배달: Optional[str] = None
+    교통: Optional[str] = None
+    통신: Optional[str] = None
+    OTT구독: Optional[str] = None
+    통신: Optional[str] = None
+    영화: Optional[str] = None
+    여가: Optional[str] = None
+    마트_음식점: Optional[str] = None
+    교육: Optional[str] = None
+    월소비: Optional[str] = None
+    고액가맹점: Optional[str] = None
+    정기결제: Optional[str] = None
+    소비패턴: Optional[str] = None  
+# slm_model = Ollama(model="qwen2.5:7b", 
+#                    request_timeout=120.0,
+#                    temperature=0.0,
+#                    system="당신은 소비데이터 분석하는 역할입니다. 지시된 형식 외 어떤 문장도 추가하지 마세요.")
 
 class ReportRequest(BaseModel):
     user_id:int
@@ -18,44 +36,7 @@ class ReportRequest(BaseModel):
     top_stores_by_amount: list
     auto_payments: list
 
-REQUIRED_FIELDS = [
-    "편의점", "카페", "쇼핑", "OTT구독","배달",
-    "교통", "통신", "영화", "여가", "마트,음식점","교육",
-    "월소비", "고액가맹점", "정기결제"]
 
-
-def parse_and_fix(text: str, total_amount: int) -> str:
-    text = text.replace("```markdown", "").replace("```", "").strip()
-    result = {}
-    extras = []
-
-    for line in text.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        if ":" in line:
-            k, _, v = line.partition(":")
-            k = k.strip().lstrip("#- ").strip()  
-            v = v.strip()
-            if k in REQUIRED_FIELDS:
-                result[k] = v if v else "없음"
-            else:
-                extras.append(line)
-        else:
-            extras.append(line)
-
-    for f in REQUIRED_FIELDS:
-        result.setdefault(f, "없음")
-        
-    result["월소비"] = f"{total_amount:,}원"
-
-    ALWAYS_SHOW = {"월소비", "고액가맹점", "정기결제"}
-    base = "\n".join(
-        f"{k}: {v}" for k, v in result.items()
-        if v != "없음" or k in ALWAYS_SHOW
-    )
-    extra = "\n".join(extras)
-    return f"{base}\n{extra}".strip() if extras else base
 
 @router.post("/askreport")
 async def generate_report(request: ReportRequest):
