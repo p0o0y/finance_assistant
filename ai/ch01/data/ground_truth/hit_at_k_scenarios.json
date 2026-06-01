@@ -640,5 +640,177 @@
     },
     "tier1_reason": "SHOPPING+는 이마트/홈플러스/롯데마트 10% + SK주유/GS칼텍스 리터당 60원 할인. Jade는 이마트/트레이더스/홈플러스 1.2% + SK에너지/GS칼텍스 1.2% 적립.",
     "irrelevant_reason": "체크카드들은 카드 타입 불일치."
-  }
+  },
+  [
+    {
+      "scenario_id": 41,
+      "description": "비명시적 질의 - 어학시험+편의점 소비",
+      "user_report": "교육: TOEIC, OPIc\n편의점: CU\n주거통신: KT 자동납부\n소비패턴: TOEIC/OPIc 관련 교육비가 77%, 편의점 13%, 통신비 5%\n정기결제: KT통신요금자동납부\n월소비: 380,994원",
+      "query": "내 소비패턴에 맞는 카드 추천해줘",
+      "relevant_cards": {
+        "tier1": ["우리 오하CHECK 체크카드"],
+        "tier2": ["신한 처음 체크카드", "KB Youth Club 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 체크카드",
+          "신한 SOL트래블 체크카드",
+          "우리 카드의정석 SHOPPING+ 신용카드"
+        ]
+      },
+      "tier1_reason": "오하CHECK는 어학시험(TOEIC/OPIc) 캐시백 + 편의점(CU) + 통신(KT) 동시 커버",
+      "irrelevant_reason": "트래블 카드는 어학시험/편의점 혜택 없음"
+    },
+    {
+      "scenario_id": 42,
+      "description": "비명시적 질의 - 병원+배달+쇼핑",
+      "user_report": "배달: 배달의민족, 쿠팡이츠\n병원: 병원/약국\n쇼핑: 면세점\n주거통신: KT 자동납부\n소비패턴: 병원 38%, 배달 22%, 쇼핑 15%\n정기결제: KT통신요금자동납부\n월소비: 895,338원",
+      "query": "나한테 맞는 카드 뭐야?",
+      "relevant_cards": {
+        "tier1": ["신한 Simple Plan+ 신용카드"],
+        "tier2": ["우리 오하CHECK 체크카드", "KB Youth Club 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 신용카드",
+          "신한 K-패스 체크카드",
+          "KB 트래블러스 체크카드"
+        ]
+      },
+      "tier1_reason": "Simple Plan+은 병원/약국 포함 전 가맹점 1.5% 할인, 실적 조건 없음. 배달/쇼핑 모두 커버",
+      "irrelevant_reason": "트래블/K-패스는 병원/배달 혜택 없음"
+    },
+    {
+      "scenario_id": 43,
+      "description": "비명시적 질의 - 카페+교통+배달",
+      "user_report": "배달: B마트\n카페: 투썸플레이스\n교통: 교통요금\n주거통신: KT 자동납부\n소비패턴: 배달 32%, 교통 29%, 카페 24%\n정기결제: KT통신요금자동납부\n월소비: 334,133원",
+      "query": "내 생활패턴에 맞는 카드 추천해줘",
+      "relevant_cards": {
+        "tier1": ["우리 오하CHECK 체크카드"],
+        "tier2": ["신한 K-패스 체크카드", "신한 나라사랑카드 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 체크카드",
+          "KB 트래블러스 체크카드",
+          "신한 SOL트래블 체크카드"
+        ]
+      },
+      "tier1_reason": "오하CHECK 배달(EAT) 5% + 카페 5% + 통신(KT) 5% 동시 커버",
+      "irrelevant_reason": "트래블 카드는 배달/카페/교통 혜택 없음"
+    },
+    {
+      "scenario_id": 44,
+      "description": "비명시적 질의 - 편의점+여가+교통",
+      "user_report": "편의점: CU, GS25\n여가: 삼성물산\n교통: 카카오T\n마트: 홈플러스\n주거통신: KT 자동납부\n소비패턴: 편의점 55%, 마트 16%, 교통 포함\n정기결제: KT통신요금자동납부\n월소비: 300,776원",
+      "query": "요즘 소비 패턴 보고 카드 추천해줘",
+      "relevant_cards": {
+        "tier1": ["BC 밥바라밥 페이북머니 체크카드", "우리 오하CHECK 체크카드"],
+        "tier2": ["신한 처음 체크카드", "KB Youth Club 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 신용카드",
+          "신한 SOL트래블 체크카드",
+          "우리 카드의정석 SHOPPING+ 신용카드"
+        ]
+      },
+      "tier1_reason": "밥바라밥 편의점(GS25/CU) 8% 적립. 오하CHECK 편의점+통신 캐시백",
+      "irrelevant_reason": "트래블 카드는 편의점/마트 혜택 없음"
+    },
+    {
+      "scenario_id": 45,
+      "description": "비명시적 질의 - 영화관+교통",
+      "user_report": "여가: 롯데시네마\n교통: 카카오T, 교통요금\n주거통신: KT 자동납부\n소비패턴: 교통 48%, 여가 23%\n정기결제: KT통신요금자동납부\n월소비: 299,054원",
+      "query": "내 라이프스타일에 맞는 카드 뭐가 좋을까?",
+      "relevant_cards": {
+        "tier1": ["KB Youth Club 체크카드"],
+        "tier2": ["신한 K-패스 체크카드", "신한 나라사랑카드 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 체크카드",
+          "우리 카드의정석 SHOPPING+ 신용카드",
+          "신한 SOL트래블 체크카드"
+        ]
+      },
+      "tier1_reason": "KB Youth Club A팩 CGV/롯데시네마 4천원 할인 + 택시/교통 20% 할인",
+      "irrelevant_reason": "트래블 카드는 영화관/교통 할인 없음"
+    },
+    {
+      "scenario_id": 46,
+      "description": "비명시적 질의 - 항공+여행 heavy",
+      "user_report": "여가: 대한항공, 제주항공\n교통: 교통요금\n정기결제: 넷플릭스\n소비패턴: 항공 83%, 교통/마트 나머지\n월소비: 1,297,526원",
+      "query": "내 소비 데이터 보면 어떤 카드 써야 해?",
+      "relevant_cards": {
+        "tier1": ["하나 트래블로그 신용카드", "하나 Jade Classic 신용카드"],
+        "tier2": ["우리 UniMile 신용카드"],
+        "irrelevant": [
+          "신한 처음 체크카드",
+          "BC 밥바라밥 페이북머니 체크카드",
+          "신한 K-패스 체크카드"
+        ]
+      },
+      "tier1_reason": "트래블로그 신용 항공사 8개사 3% + 넷플릭스 OTT 적립. Jade 항공/면세점 1.5% + 공항라운지",
+      "irrelevant_reason": "처음/밥바라밥은 항공/여행 혜택 없음"
+    },
+    {
+      "scenario_id": 47,
+      "description": "비명시적 질의 - 쇼핑+카페+편의점",
+      "user_report": "편의점: GS25\n마트: 다이소\n카페: 스타벅스\n쇼핑: 29cm, 무신사, 지그재그\n정기결제: KT통신요금자동납부, 넷플릭스\n소비패턴: 쇼핑 51%, 카페+편의점 포함\n월소비: 1,059,347원",
+      "query": "내 소비 보고 제일 혜택 많은 카드 찾아줘",
+      "relevant_cards": {
+        "tier1": ["KB Youth Club 체크카드", "MG 더나은 체크카드"],
+        "tier2": ["우리 오하CHECK 체크카드", "신한 처음 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 신용카드",
+          "KB 트래블러스 체크카드",
+          "우리 카드의정석 SHOPPING+ 신용카드"
+        ]
+      },
+      "tier1_reason": "Youth Club 무신사/지그재그 20% + OTT/통신. MG 더나은 무신사/지그재그 20% + 스타벅스 20%",
+      "irrelevant_reason": "트래블 카드는 패션쇼핑/카페 혜택 없음"
+    },
+    {
+      "scenario_id": 48,
+      "description": "비명시적 질의 - 쇼핑+교통 복합",
+      "user_report": "쇼핑: 올리브영, AK플라자, 29cm\n교통: 교통요금\n정기결제: 넷플릭스\n소비패턴: 쇼핑 비중 가장 높음\n월소비: 544,697원",
+      "query": "이번 달 소비 패턴 분석해서 카드 추천해줘",
+      "relevant_cards": {
+        "tier1": ["KB Youth Club 체크카드", "MG 더나은 체크카드"],
+        "tier2": ["신한 처음 체크카드", "우리 오하CHECK 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 체크카드",
+          "신한 K-패스 체크카드",
+          "하나 Jade Classic 신용카드"
+        ]
+      },
+      "tier1_reason": "Youth Club 올리브영/29cm 20%. MG 더나은 쇼핑몰 20% + OTT(넷플릭스) 캐시백",
+      "irrelevant_reason": "K-패스/트래블로그는 쇼핑 혜택 없음"
+    },
+    {
+      "scenario_id": 49,
+      "description": "비명시적 질의 - 여행+쇼핑 복합",
+      "user_report": "여가: 하나투어\n쇼핑: 29cm\n교통: 교통요금\n정기결제: 넷플릭스\n소비패턴: 하나투어 81%, 쇼핑 9%, 교통 6%\n월소비: 1,689,105원",
+      "query": "내 한 달 소비 보고 카드 추천해줘",
+      "relevant_cards": {
+        "tier1": ["하나 트래블로그 신용카드", "하나 Jade Classic 신용카드"],
+        "tier2": ["KB WE:SH All+ 카드"],
+        "irrelevant": [
+          "신한 처음 체크카드",
+          "BC 밥바라밥 페이북머니 체크카드",
+          "신한 K-패스 체크카드"
+        ]
+      },
+      "tier1_reason": "트래블로그 신용 여행사 적립 + 넷플릭스. Jade 여행/항공 1.5% + 공항라운지",
+      "irrelevant_reason": "처음/밥바라밥은 여행 혜택 없음"
+    },
+    {
+      "scenario_id": 50,
+      "description": "비명시적 질의 - 쇼핑+카페+통신 복합",
+      "user_report": "쇼핑: 컬리, 지그재그\n카페: 스타벅스, 더리터\n편의점: GS25\n마트: 다이소\n교통: 교통요금\n정기결제: KT통신요금자동납부, 넷플릭스\n월소비: 677,022원",
+      "query": "내 소비 패턴 분석하면 어떤 카드가 제일 이득이야?",
+      "relevant_cards": {
+        "tier1": ["우리 오하CHECK 체크카드", "KB Youth Club 체크카드"],
+        "tier2": ["MG 더나은 체크카드", "신한 처음 체크카드"],
+        "irrelevant": [
+          "하나 트래블로그 신용카드",
+          "신한 SOL트래블 체크카드",
+          "우리 카드의정석 SHOPPING+ 신용카드"
+        ]
+      },
+      "tier1_reason": "오하CHECK 쇼핑+카페+통신+OTT 각 5%. Youth Club 지그재그 20% + OTT 50% + 통신 30%",
+      "irrelevant_reason": "트래블 카드는 쇼핑/카페/통신 혜택 없음"
+    }
+  ]
 ]
