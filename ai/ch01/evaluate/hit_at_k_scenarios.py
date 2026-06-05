@@ -1,8 +1,5 @@
-
-
-import json, os, re, asyncio
+import json, os, re, asyncio,time
 from concurrent.futures import ThreadPoolExecutor
-from time import time
 from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -66,7 +63,7 @@ embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-m3", device=device)
 qdrant_client = QdrantClient(
     url=os.getenv("QDRANT_URL"),
     api_key=os.getenv("QDRANT_API_KEY"),
-    timeout=60.0
+    timeout=300.0
 )
 
 vector_store = QdrantVectorStore(
@@ -77,7 +74,7 @@ vector_store = QdrantVectorStore(
 )
 index = VectorStoreIndex.from_vector_store(vector_store, embed_model=embed_model)
 
-slm_model = Ollama(model="qwen2.5:7b", request_timeout=60.0)
+slm_model = Ollama(model="qwen2.5:7b", request_timeout=60.0, temperature=0.0)
 slm_filter = LLMRerank(llm=slm_model, top_n=15, choice_batch_size=5)
 
 reranker = SentenceTransformerRerank(
@@ -95,14 +92,15 @@ def get_filters(query: str):
     return None
 
 
-async def search(query: str, user_report: str, mode: str, top_k: int = 5):
+async def search(query: str, user_report: str, mode: str, top_k: int = 3):
     enriched_query = f"사용자 소비 리포트: {user_report}\n질문: {query}"
     query_bundle = QueryBundle(enriched_query)
     filters = get_filters(query)
 
+    RECALL_POOL=20 # sparse/dense 후보수 
     if mode == "sparse":
         retriever = index.as_retriever(
-            similarity_top_k=top_k,
+            similarity_top_k=RECALL_POOL,
             vector_store_query_mode="sparse",
             filters=filters
         )
@@ -110,7 +108,7 @@ async def search(query: str, user_report: str, mode: str, top_k: int = 5):
 
     elif mode == "dense":
         retriever = index.as_retriever(
-            similarity_top_k=top_k,
+            similarity_top_k=RECALL_POOL,
             vector_store_query_mode="default",
             filters=filters
         )
@@ -119,8 +117,8 @@ async def search(query: str, user_report: str, mode: str, top_k: int = 5):
    
     else:  # hybrid, hybrid_rerank, hybrid_slm_rerank
         retriever = index.as_retriever(
-            similarity_top_k=30,  
-            sparse_top_k=30,
+            similarity_top_k=RECALL_POOL//2,  
+            sparse_top_k=RECALL_POOL//2,
             vector_store_query_mode="hybrid",
             filters=filters
         )
@@ -130,18 +128,19 @@ async def search(query: str, user_report: str, mode: str, top_k: int = 5):
 
     if mode == "hybrid_slm_rerank":
         try:
-            slm_filter.top_n = 15
+            slm_filter.top_n = 10 
             nodes = await loop.run_in_executor(
                 executor,
                 lambda: slm_filter.postprocess_nodes(nodes, query_bundle)
             )
         except Exception as e:
             print(f"SLM 필터 오류: {e}")
-            nodes = nodes[:20]
+            nodes = nodes[:10]
 
     #  Cross-Encoder Reranking
     if mode in ["hybrid_rerank", "hybrid_slm_rerank"]:
         try:
+            reranker.top_n = 5
             nodes = await loop.run_in_executor(
                 executor,
                 lambda: reranker.postprocess_nodes(nodes, query_bundle)
@@ -175,7 +174,7 @@ def is_match(retrieved: str, answer: str) -> bool:
 
 # Hit@K 평가
 
-async def evaluate(scenarios, mode: str, k: int = 5, card_filter: str = "all"):
+async def evaluate(scenarios, mode: str, k: int = 3, card_filter: str = "all"):
     hits = []
     latencies = []
     print_lock = asyncio.Lock()
@@ -238,18 +237,18 @@ async def main():
         print('='*60)
 
         print("\n-----[1]전체-----")
-        h_all, t_all = await evaluate(scenarios, mode_key, k=5, card_filter="all")
+        h_all, t_all = await evaluate(scenarios, mode_key, k=3, card_filter="all")
 
         print("\n-----[2]신용카드----")
-        h_credit, t_credit = await evaluate(scenarios, mode_key, k=5, card_filter="credit")
+        h_credit, t_credit = await evaluate(scenarios, mode_key, k=3, card_filter="credit")
 
         print("\n-----[3]체크카드-----")
-        h_check, t_check = await evaluate(scenarios, mode_key, k=5, card_filter="check")
+        h_check, t_check = await evaluate(scenarios, mode_key, k=3, card_filter="check")
 
         results[mode_name] = {
-            "전체 Hit@5": round(h_all,4),"전체 시간": round(t_all, 2),
-            "신용카드 Hit@5": round(h_credit,4), "신용 시간": round(t_credit, 2),
-            "체크카드 Hit@5": round(h_check,4), "체크 시간": round(t_check, 2),
+            "전체 Hit@3": round(h_all,4),"전체 시간": round(t_all, 2),
+            "신용카드 Hit@3": round(h_credit,4), "신용 시간": round(t_credit, 2),
+            "체크카드 Hit@3": round(h_check,4), "체크 시간": round(t_check, 2),
         }
 
     print("\n\n" + "="*95)
@@ -261,9 +260,9 @@ async def main():
     for name, res in results.items():
         print(
             f"{name:<25} "
-            f"{res['전체 Hit@5']*100:>8.1f}% {res['전체 시간']:>8.2f}s  |  "
-            f"{res['신용카드 Hit@5']*100:>8.1f}% {res['신용 시간']:>8.2f}s  |  "
-            f"{res['체크카드 Hit@5']*100:>8.1f}% {res['체크 시간']:>8.2f}s"
+            f"{res['전체 Hit@3']*100:>8.1f}% {res['전체 시간']:>8.2f}s  |  "
+            f"{res['신용카드 Hit@3']*100:>8.1f}% {res['신용 시간']:>8.2f}s  |  "
+            f"{res['체크카드 Hit@3']*100:>8.1f}% {res['체크 시간']:>8.2f}s"
         )
 
     os.makedirs(os.path.dirname(RESULT_PATH), exist_ok=True)
