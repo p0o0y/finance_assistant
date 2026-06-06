@@ -1,6 +1,5 @@
 package demo.senior_project.domain.fastapi;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -8,9 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
-import java.util.List;
 import java.util.Map;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import java.time.Duration;
 @Service
 public class CardRecommendationService {
@@ -56,7 +53,4 @@ public class CardRecommendationService {
         }
     }
 }
-
-record CardResponse(String answer, List<SourceNode> source_nodes) {} // 전체 응답
-record SourceNode(String card_name, Double score) {} // 카드 정보 응답
 

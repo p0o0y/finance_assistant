@@ -25,15 +25,22 @@ public class CardRecommendController {
         @PostMapping("/recommend")
         public CardResponse ask(@AuthenticationPrincipal CustomOauth2User principal, @RequestBody Map<String, String> request) {
             String query = request.get("query");
+            String incomingReport = request.get("user_report");
 
-            User user = principal.getUser();
-            List<ConsumptionReport> reports = consumptionReportRepository.findTop3ByUserOrderByYearMonthDesc(user);
+            String finalUserReport = "";
+            if(incomingReport!=null && !incomingReport.strip().isEmpty()){
+                User user = principal.getUser();
+                List<ConsumptionReport> reports = consumptionReportRepository.findTop3ByUserOrderByYearMonthDesc(user);
 
-            String userReport = reports.stream()
-                    .map(r -> "[" + r.getYearMonth() + "]\n" + r.getReportText())
-                    .collect(Collectors.joining("\n\n"));
+                finalUserReport = reports.stream()
+                        .map(r -> "[" + r.getYearMonth() + "]\n" + r.getReportText())
+                        .collect(Collectors.joining("\n\n"));
+            }
+            else {
+                finalUserReport = "";
+            }
 
-            return cardRecommendationService.getRecommendation(query, userReport);
+            return cardRecommendationService.getRecommendation(query, finalUserReport);
         }
     }
 

@@ -36,6 +36,6 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         ResponseCookie cookie = cookieUtil.createAccessTokenCookie(accessToken,60*60);
         response.addHeader(HttpHeaders.SET_COOKIE,cookie.toString());
 
-        response.sendRedirect(redirectUrl);
+        response.sendRedirect(redirectUrl+accessToken);
     }
 }

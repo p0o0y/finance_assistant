@@ -101,7 +101,7 @@ public class OpenAIService {
                             String content = root.at("/choices/0/message/content").asText().trim();
 
                             JsonNode contentNode = objectMapper.readTree(content);
-                            log.info("[{}] ✅ OpenAI 응답 완료 ({}ms)", threadName, System.currentTimeMillis() - startTime);
+                            log.info("[{}] ✅ OpenAI 응답 완료 ({}ms)", Thread.currentThread().getName(), System.currentTimeMillis() - startTime);
 
                             return contentNode.get("category").asText();
 
