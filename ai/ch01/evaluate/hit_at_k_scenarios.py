@@ -204,7 +204,7 @@ async def evaluate(scenarios, mode: str, k: int = 3, card_filter: str = "all"):
             if hit:
                 break
         hits.append(hit)
-        label = "✅" if hit else "🔴"
+        label = "" if hit else "🔴"
         top_5_str = ", ".join(retrieved[:5]) if retrieved else "none"
         async with print_lock: 
             print(f"  [{label}] #{s['scenario_id']:2d} ({end_time - start_time:.2f}초) - 정답: {tier1[0][:15]:<15} | 추천 Top5: [{top_5_str}]")

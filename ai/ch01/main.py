@@ -10,19 +10,20 @@ from llama_index.core import VectorStoreIndex, QueryBundle, set_global_handler
 from llama_index.core.schema import NodeWithScore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.postprocessor import SentenceTransformerRerank
-from llama_index.core.postprocessor import LLMRerank
 from llama_index.llms.openai import OpenAI
-from llama_index.llms.ollama import Ollama
 from qdrant_client import QdrantClient
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from llama_index.core.vector_stores import MetadataFilters, MetadataFilter
 from offreport import router as report_router
 
 load_dotenv()
-set_global_handler("simple") # 디버깅용 
+set_global_handler("simple")
 app = FastAPI()
 app.include_router(report_router)
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# 임베딩 모델 (BGE-M3)
 embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-m3", device=device)
 
 qdrant_client = QdrantClient(
@@ -42,14 +43,11 @@ index = VectorStoreIndex.from_vector_store(
     embed_model=embed_model
 )
 
-# slm binary filter 
-slm_model = Ollama(model="qwen2.5:7b", request_timeout=60.0)
-slm_filter = LLMRerank(llm=slm_model,top_n=15,     choice_batch_size=5 )
+reranker = SentenceTransformerRerank(model="BAAI/bge-reranker-v2-m3", top_n=5, device=device)
 
-# cross-encoder reranker
-reranker = SentenceTransformerRerank(model="BAAI/bge-reranker-v2-m3",top_n=5,device=device) 
+def _run_reranker(nodes, query_bundle):
+    return reranker.postprocess_nodes(nodes, query_bundle)
 
-# gpt-4o
 final_llm = OpenAI(model="gpt-4o-mini")
 
 executor = ThreadPoolExecutor(max_workers=2)
@@ -58,92 +56,103 @@ class ChatRequest(BaseModel):
     query: str
     user_report: str = ""
 
-def _run_slm_filter(nodes,query_bundle):
-    return slm_filter.postprocess_nodes(nodes, query_bundle)
-
-def _run_reranker(nodes, query_bundle):
-    return reranker.postprocess_nodes(nodes, query_bundle)
-
 
 @app.post("/ask")
 async def ask_rag(request: ChatRequest):
-
     query = request.query
-
+    user_report = request.user_report.strip()
     filters = None
 
     if "신용" in query:
         filters = MetadataFilters(
-        filters=[MetadataFilter(key="card_type", value="신용카드")]
-    )
+            filters=[MetadataFilter(key="card_type", value="신용카드")]
+        )
     elif "체크" in query:
         filters = MetadataFilters(
-        filters=[MetadataFilter(key="card_type", value="체크카드")]
-    )
+            filters=[MetadataFilter(key="card_type", value="체크카드")]
+        )
         
-    vector_retriever = index.as_retriever(
-        similarity_top_k=60,
-        sparse_top_k=40,
-        vector_store_query_mode="hybrid",
-        filters=filters
-    )   
+    # 소비리포트 있을 경우 
+    if user_report:
+        enriched_query = f"사용자 소비 리포트:\n{user_report}\n\n질문: {query}"
+        query_bundle = QueryBundle(enriched_query)
 
-    print(f"\n[요청] 사용자 query: {request.query}")
-    enriched_query = (f"사용자 소비 리포트: {request.user_report}\n" f"질문: {request.query}")
-    query_bundle = QueryBundle(enriched_query)
+        vector_retriever = index.as_retriever(
+            similarity_top_k=15,       
+            sparse_top_k=15,            
+            vector_store_query_mode="hybrid",
+            filters=filters
+        )   
 
-    # step 1 : hybrid retrieval 
-    try:
-        initial_nodes: List[NodeWithScore] = vector_retriever.retrieve(query_bundle)
-        print(f"Hybrid Search: {len(initial_nodes)}개 후보 ")
-        for i, n in enumerate(initial_nodes[:3]):  # 상위 3
-            print(f"   Top{i+1}: score={round(n.score or 0, 4)} | {n.node.text[:400].strip()}")
-    except Exception as e:
-        print(f"DB 검색 에러: {e}")
-        initial_nodes = []
+        #  Hybrid Retrieval 
+        try:
+            initial_nodes: List[NodeWithScore] = vector_retriever.retrieve(query_bundle)
+            print(f"-> 추천용 Hybrid Search 완료: {len(initial_nodes)}개 후보 추출")
+            for i, n in enumerate(initial_nodes[:5]):
+                print(f"   Top{i+1}: score={round(n.score or 0, 4)} | {n.node.text[:100].strip()}...")
+        except Exception as e:
+            print(f"DB 검색 에러: {e}")
+            initial_nodes = []
 
-    # step 2 - SLM Binary Filter
-    try:
-        loop = asyncio.get_running_loop()
-        filtered_nodes = await loop.run_in_executor(
-            executor,
-            lambda: _run_slm_filter(initial_nodes, query_bundle)
+   
+        final_nodes = initial_nodes[:5]
+        
+    #소비리포트 없이 순수 유저 쿼리
+    else:
+        query_bundle = QueryBundle(query)
+
+        vector_retriever = index.as_retriever(
+            similarity_top_k=10, 
+            sparse_top_k=10, 
+            vector_store_query_mode="hybrid",
+            filters=filters
         )
-        print(f" [SLM Filter] {len(filtered_nodes)}개 추출")
-        for i, n in enumerate(filtered_nodes):
-            print(f"  SLM [{i+1}]: score={round(n.score or 0, 4)} | 카드={n.metadata.get('card_name','?')} | {n.node.text[:400].strip()}")
+        try:
+            initial_nodes = vector_retriever.retrieve(query_bundle)
+            print(f" 유저 쿼리 검색용 Hybrid Search 완료: {len(initial_nodes)}개 후보 추출")
+        except Exception as e:
+            print(f"DB 검색 에러: {e}")
+            initial_nodes = []
+            
+        if not initial_nodes:
+            raise HTTPException(status_code=404, detail="관련된 카드 조건 정보를 찾을 수 없습니다.")
+            
+        try:
+            loop = asyncio.get_running_loop()
+            final_nodes = await loop.run_in_executor(
+                executor,
+                lambda: _run_reranker(initial_nodes, query_bundle)
+            )
+            print(f" Cross-Encoder 예외 조건 순위 재정렬 완료 (최종 {len(final_nodes)}개 확정)")
+        except Exception as e:
+            print(f"Reranker 실패, 하이브리드 순위 사용: {e}")
+            final_nodes = initial_nodes[:5]
 
-    except Exception as e:
-        print(f" SLM 필터 실패, 전체 후보 사용: {e}")
-        filtered_nodes = initial_nodes[:20]  # fallback
+    if not final_nodes:
+        raise HTTPException(status_code=404, detail="관련 카드를 찾을 수 없습니다.")
 
-    # step 3: Cross-Encoder Rerank 
-    try:
-        final_nodes = await loop.run_in_executor(
-            executor,
-            lambda: _run_reranker(filtered_nodes, query_bundle)
-        )
-        print(f"[Reranker] 최종 {len(final_nodes)}개 확정")
-        for i, n in enumerate(final_nodes):
-            print(f"  최종 [{i+1}]: score={round(n.score or 0, 4)} | 카드={n.metadata.get('card_name','?')} | {n.node.text[:500].strip()}")
-    except Exception as e:
-        print(f"Reranker 실패, SLM 결과 사용: {e}")
-        final_nodes = filtered_nodes[:5]  # fallback
-
-    # step 4- gpt 답변 생성 
     context_str = "\n".join([n.get_content() for n in final_nodes])
-    system_prompt = (
-        f"당신은 금융 상품 추천 전문가입니다. 반드시 한국어로만 답변하세요.\n"
-        f"아래 '추천 카드 정보'와 '사용자 소비 리포트'를 바탕으로 답변하세요.\n"
-        f"전월 실적 조건과 혜택 제외 대상까지 꼼꼼히 대조하여 정확한 정보만 제공하세요.\n\n"
-        f"사용자 소비 리포트:\n{request.user_report}\n\n"
-        f"추천 카드 정보:\n{context_str}\n"
-    )
+    
+    if user_report:
+         system_prompt = (
+            f"당신은 금융 상품 추천 전문가입니다. 반드시 한국어로만 답변하세요.\n"
+            f"아래 '추천 카드 정보'와 '사용자 소비 리포트'를 바탕으로 답변하세요.\n"
+            f"전월 실적 조건과 혜택 제외 대상까지 꼼꼼히 대조하여 정확한 정보만 제공하세요.\n\n"
+            f"사용자 소비 리포트:\n{user_report}\n\n"
+            f"추천 카드 정보:\n{context_str}\n"
+        )
+    else:
+        system_prompt = (
+            f"당신은 카드혜택 정보에대한 약관 및 혜택 조건 분석 전문가입니다. 반드시 한국어로만 답변하세요.\n"
+            f"아래 제공된 '카드 정보'를 극도로 꼼꼼하게 대조하여 사용자의 질문에 답변하세요.\n"
+            f"특히 사용자가 '전월 실적', '혜택 제외 대상', '한도 조건' 등의 예외 처리를 물어본 경우, "
+            f"문서에 적힌 수치와 예외 조항 텍스트를 왜곡 없이 있는 그대로 팩트만 전달해야 합니다.\n"
+            f"만약 문서에 해당 내용이 명시되어 있지 않다면, 짐작해서 답변하지 말고 '확인이 어렵다'고 솔직하게 답하세요.\n\n"
+            f"카드 정보:\n{context_str}\n"
+        )
     
     try:
-        response = final_llm.complete(
-            f"{system_prompt}\n질문: {request.query}\n답변:"
-        )
+        response = final_llm.complete(f"{system_prompt}\n질문: {query}\n답변:")
         answer = response.text
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM 응답 실패: {e}")
@@ -161,4 +170,4 @@ async def ask_rag(request: ChatRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=8000)
