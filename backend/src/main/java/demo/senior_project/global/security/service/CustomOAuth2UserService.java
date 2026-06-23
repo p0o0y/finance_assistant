@@ -35,11 +35,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private User findUser(OAuth2Attribute attribute){
         return userRepository.findByOauthIdAndOauthProvider(
-                attribute.getOauthId(),
-                attribute.getOAuth2Provider())
+                        attribute.getOauthId(),
+                        attribute.getOAuth2Provider())
                 .orElseGet(() ->{
                     User newUser = attribute.createEntity();
                     return userRepository.save(newUser);
-        });
+                });
     }
 }

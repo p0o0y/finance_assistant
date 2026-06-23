@@ -19,28 +19,28 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/cards")
 @RequiredArgsConstructor
 public class CardRecommendController {
-        private final CardRecommendationService cardRecommendationService;
-        private final ConsumptionReportRepository consumptionReportRepository;
+    private final CardRecommendationService cardRecommendationService;
+    private final ConsumptionReportRepository consumptionReportRepository;
 
-        @PostMapping("/recommend")
-        public CardResponse ask(@AuthenticationPrincipal CustomOauth2User principal, @RequestBody Map<String, String> request) {
-            String query = request.get("query");
-            String incomingReport = request.get("user_report");
+    @PostMapping("/recommend")
+    public CardResponse ask(@AuthenticationPrincipal CustomOauth2User principal, @RequestBody Map<String, String> request) {
+        String query = request.get("query");
+        String incomingReport = request.get("user_report");
 
-            String finalUserReport = "";
-            if(incomingReport!=null && !incomingReport.strip().isEmpty()){
-                User user = principal.getUser();
-                List<ConsumptionReport> reports = consumptionReportRepository.findTop3ByUserOrderByYearMonthDesc(user);
+        String finalUserReport = "";
+        if(incomingReport!=null && !incomingReport.strip().isEmpty()){
+            User user = principal.getUser();
+            List<ConsumptionReport> reports = consumptionReportRepository.findTop3ByUserOrderByYearMonthDesc(user);
 
-                finalUserReport = reports.stream()
-                        .map(r -> "[" + r.getYearMonth() + "]\n" + r.getReportText())
-                        .collect(Collectors.joining("\n\n"));
-            }
-            else {
-                finalUserReport = "";
-            }
-
-            return cardRecommendationService.getRecommendation(query, finalUserReport);
+            finalUserReport = reports.stream()
+                    .map(r -> "[" + r.getYearMonth() + "]\n" + r.getReportText())
+                    .collect(Collectors.joining("\n\n"));
         }
+        else {
+            finalUserReport = "";
+        }
+
+        return cardRecommendationService.getRecommendation(query, finalUserReport);
     }
+}
 
